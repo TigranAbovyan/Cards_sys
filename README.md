@@ -12,7 +12,12 @@ Connecting to docker connect
 ```
 docker network connect --ip 172.18.0.2 docker-network prometheus
 ```
-
+```
+docker run --name node -d -p 9100:9100  prom/node-exporter
+```
+```
+docker network connect --ip 172.18.0.3 docker-network node
+```
 ```
 http://localhost:9090/
 ```
