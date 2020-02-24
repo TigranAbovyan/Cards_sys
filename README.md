@@ -5,9 +5,10 @@ With this command we are creating docker network
 
 Running 
 ```docker run --name prometheus -d -p 9090:9090 -v /etc/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml prom/prometheus --config.file="/etc/prometheus/prometheus.yml" 
+```
 
-```docker network connect --ip 172.18.0.2 docker-network prometheus
+docker network connect --ip 172.18.0.2 docker-network prometheus
 
 
 
-http://localhost:9090/```
+http://localhost:9090/
