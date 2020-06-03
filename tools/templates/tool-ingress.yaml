@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: tool
+  namespace: ns-cafeco-tools
+spec:
+  rules:
+  - http:
+      paths:
+        - path: /kafka-connect-ui/
+          backend:
+            serviceName: kafka-connect-ui
+            servicePort: 8000
+        - path: /kafka-topic-ui/
+          backend:
+            serviceName: kafka-topics-ui
+            servicePort: 8000
+        - path: /scheme-registry-ui/
+          backend:
+            serviceName: schema-registry-ui
+            servicePort: 8000

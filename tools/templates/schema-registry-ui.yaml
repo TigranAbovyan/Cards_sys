@@ -1,0 +1,49 @@
+{{ if .Values.schemaRegistryUI.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: schema-registry-ui
+  namespace: ns-cafeco-tools
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: schema-registry-ui
+  template:
+    metadata:
+      labels:
+        app: schema-registry-ui
+    spec:
+      containers:
+      - image: landoop/schema-registry-ui
+        name: schema-registry-ui
+        ports:
+        - containerPort: 8000
+        env:
+          - name: SCHEMAREGISTRY_URL
+            value: {{ .Values.kafka.schemaRegistryUrl }}
+          - name: PROXY
+            value: 'true'
+        resources:
+          requests:
+            memory: {{ .Values.resources.requestMemory }}
+            cpu: {{ .Values.resources.requestCpu }}
+          limits:
+            memory: {{ .Values.resources.limitMemory }}
+            cpu: {{ .Values.resources.limitCpu }}
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: schema-registry-ui
+  namespace: ns-cafeco-tools
+spec:
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000
+  type: ClusterIP
+  selector:
+    app: schema-registry-ui
+{{end}}

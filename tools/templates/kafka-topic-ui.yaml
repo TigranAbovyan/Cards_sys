@@ -1,0 +1,80 @@
+{{ if .Values.kafkaTopicsUI.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-topics-ui
+  namespace: ns-cafeco-tools
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka-topics-ui
+  template:
+    metadata:
+      labels:
+        app: kafka-topics-ui
+    spec:
+      containers:
+      - image: landoop/kafka-topics-ui
+        name: kafka-topics-ui
+        ports:
+        - containerPort: 8000
+        env:
+          - name: PROXY
+            value: 'true'
+          - name: KAFKA_REST_PROXY_URL
+            value: "https://kafka-cco-dev-01.cardsys.at:9093,https://kafka-cco-dev-02.cardsys.at:9093,https://kafka-cco-dev-03.cardsys.at:9093"
+        {{ if .Values.kafka.sslEnabled }}
+          - name: KAFKA_COMMON_SECURITY_PROTOCOL
+            value: SSL
+          - name: KAFKA_COMMON_SSL_KEYSTORE_LOCATION
+            value: /var/private/ssl/kafka.broker.keystore.jks
+          - name: KAFKA_COMMON_SSL_KEYSTORE_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: kafka-ssl
+                key: keystore-creds
+          - name: KAFKA_COMMON_SSL_TRUSTSTORE_LOCATION
+            value: /var/private/ssl/kafka.broker.truststore.jks
+          - name: KAFKA_COMMON_SSL_TRUSTSTORE_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: kafka-ssl
+                key: truststore-creds
+          - name: KAFKA_COMMON_SSL_KEY_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: kafka-ssl
+                key: key-creds
+          #- name: KAFKA_COMMON_SECURITY_INTER_BROKER_PROTOCOL
+          #  value: SSL
+          - name: KAFKA_COMMON_SSL_CLIENT_AUTH
+            value: required
+        resources:
+          requests:
+            memory: {{ .Values.resources.requestMemory }}
+            cpu: {{ .Values.resources.requestCpu }}
+          limits:
+            memory: {{ .Values.resources.limitMemory }}
+            cpu: {{ .Values.resources.limitCpu }}
+      restartPolicy: Always
+{{ toYaml .Values.resources | indent 12 }}
+    {{- if .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml .Values.nodeSelector | indent 8 }}
+    {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-topics-ui
+  namespace: ns-cafeco-tools
+spec:
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000
+  type: ClusterIP
+  selector:
+    app: kafka-topics-ui
+{{end}}

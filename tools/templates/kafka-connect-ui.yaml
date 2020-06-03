@@ -1,0 +1,73 @@
+{{ if .Values.kafkaConnectUI.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-connect-ui
+  namespace: ns-cafeco-tools
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka-connect-ui
+  template:
+    metadata:
+      labels:
+        app: kafka-connect-ui
+    spec:
+      containers:
+      - image: landoop/kafka-connect-ui
+        name: kafka-connect-ui
+        ports:
+        - containerPort: 8000
+        env:
+          - name: PROXY
+            value: 'true'
+          - name: CONNECT_URL
+            value: "https://kafka-cco-dev-01.cardsys.at:9093,https://kafka-cco-dev-02.cardsys.at:9093,https://kafka-cco-dev-03.cardsys.at:9093"
+        {{ if .Values.kafka.sslEnabled }}
+          - name: KAFKA_COMMON_SECURITY_PROTOCOL
+            value: SSL
+          - name: KAFKA_COMMON_SSL_KEYSTORE_LOCATION
+            value: /var/private/ssl/kafka.broker.keystore.jks
+          - name: KAFKA_COMMON_SSL_KEYSTORE_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: kafka-ssl
+                key: keystore-creds
+          - name: KAFKA_COMMON_SSL_TRUSTSTORE_LOCATION
+            value: /var/private/ssl/kafka.broker.truststore.jks
+          - name: KAFKA_COMMON_SSL_TRUSTSTORE_PASSWORD
+            value: "cardsys"
+          - name: KAFKA_COMMON_SSL_KEY_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: kafka-ssl
+                key: key-creds
+          #- name: KAFKA_COMMON_SECURITY_INTER_BROKER_PROTOCOL
+          #  value: SSL
+          - name: KAFKA_COMMON_SSL_CLIENT_AUTH
+            value: required
+            {{end}}
+        resources:
+          requests:
+            memory: {{ .Values.resources.requestMemory }}
+            cpu: {{ .Values.resources.requestCpu }}
+          limits:
+            memory: {{ .Values.resources.limitMemory }}
+            cpu: {{ .Values.resources.limitCpu }}
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-connect-ui
+  namespace: ns-cafeco-tools
+spec:
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000
+  type: ClusterIP
+  selector:
+    app: kafka-connect-ui
+{{end}}
